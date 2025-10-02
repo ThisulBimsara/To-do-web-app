@@ -229,17 +229,18 @@ export default function Page() {
               <div className="space-y-3">
                 {todos.map((t) => (
                   <div
-                    key={t.id}
-                    className="border rounded-md p-3 bg-background/50"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="font-semibold">{t.title}</div>
-                        <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                          {t.description || <span className="italic">— no description —</span>}
+                      key={t.id}
+                      className="border rounded-md p-3 bg-background/50 hover:shadow cursor-pointer"
+                      onClick={() => openProgressDialog(t)}   // 👈 Add this
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-semibold">{t.title}</div>
+                          <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                            {t.description || <span className="italic">— no description —</span>}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
                     <div className="mt-3 flex gap-2">
                       <Button
