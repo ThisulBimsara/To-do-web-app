@@ -31,23 +31,24 @@ type Task = {
 };
 
 export default function Page() {
-  // Lists for each column
+
   const [drafts, setDrafts] = useState<Task[]>([]);
   const [todos, setTodos] = useState<Task[]>([]);
   const [progress, setProgress] = useState<Task[]>([]);
 
-  // Input for adding new draft (section 1)
   const [newTitle, setNewTitle] = useState("");
 
-  // Dialog state for editing a draft (title + description)
   const [openDialog, setOpenDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingDescription, setEditingDescription] = useState("");
 
-  // Helpers
+
+  const [editingProgressTask, setEditingProgressTask] = useState<Task | null>(null);
+  const [progressDescription, setProgressDescription] = useState("");
+
   const uid = () => crypto.randomUUID();
 
-  // Add a draft task (Section 1)
+  
   const addDraft = () => {
     const title = newTitle.trim();
     if (!title) return;
@@ -55,12 +56,18 @@ export default function Page() {
     setNewTitle("");
   };
 
-  // Open dialog when user clicks a draft card
+ 
   const openEditDialog = (task: Task) => {
     setEditingTask(task);
     setEditingDescription(task.description || "");
     setOpenDialog(true);
   };
+
+  const openProgressDialog = (task: Task) => {
+    setEditingProgressTask(task);
+    setProgressDescription(task.description || "");
+  };
+
 
   // Save from dialog:
   // - If editingTask exists in drafts, remove from drafts and add to todos with description (Section 2)
@@ -269,7 +276,9 @@ export default function Page() {
                 {progress.map((t) => (
                   <div
                     key={t.id}
-                    className="border rounded-md p-3 bg-background/50"
+                       className="border rounded-md p-3 bg-background/50 hover:shadow cursor-pointer"
+                       onClick={() => openProgressDialog(t)}
+                    
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -333,6 +342,82 @@ export default function Page() {
               Cancel
             </Button>
             <Button onClick={saveDialog}>Save & Move to To Do</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+       {/* Dialog used to edit a task in Progress */}
+      <Dialog
+        open={!!editingProgressTask}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditingProgressTask(null);
+            setProgressDescription("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit In Progress Task</DialogTitle>
+            <DialogDescription>
+              Update the description or title of this task.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-2 py-4">
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={editingProgressTask?.title ?? ""}
+                onChange={(e) =>
+                  setEditingProgressTask((prev) =>
+                    prev ? { ...prev, title: e.target.value } : prev
+                  )
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={progressDescription}
+                onChange={(e) => setProgressDescription(e.target.value)}
+                placeholder="Update task details..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingProgressTask(null);
+                setProgressDescription("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!editingProgressTask) return;
+
+                // update task inside progress list
+                setProgress((list) =>
+                  list.map((t) =>
+                    t.id === editingProgressTask.id
+                      ? { ...t, title: editingProgressTask.title, description: progressDescription }
+                      : t
+                  )
+                );
+
+                // close
+                setEditingProgressTask(null);
+                setProgressDescription("");
+              }}
+            >
+              Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
