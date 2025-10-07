@@ -1,7 +1,10 @@
 "use client";
 
 import { create } from "zustand";
+<<<<<<< Updated upstream
 import { persist } from "zustand/middleware";
+=======
+>>>>>>> Stashed changes
 
 export type Task = {
   id: string;
@@ -28,6 +31,7 @@ type Store = {
 
   updateInProgressTask: (id: string, data: Partial<Task>) => void;
 
+<<<<<<< Updated upstream
   clearAllTasks: () => void; 
 };
 
@@ -103,3 +107,70 @@ export const useTaskStore = create<Store>()(
     }
   )
 );
+=======
+  // ✅ ADD THIS
+  removeDone: (id: string) => void;
+};
+
+export const useTaskStore = create<Store>((set, get) => ({
+  todo: [],
+  inProgress: [],
+  done: [],
+
+  selectedDraftId: null,
+  selectedInProgressId: null,
+
+  addTodo: (title: string) =>
+    set((s) => ({
+      todo: [{ id: crypto.randomUUID(), title, description: "" }, ...s.todo],
+    })),
+
+  removeTodo: (id: string) =>
+    set((s) => ({ todo: s.todo.filter((t) => t.id !== id) })),
+
+  selectDraft: (id) => set(() => ({ selectedDraftId: id })),
+  selectInProgress: (id) => set(() => ({ selectedInProgressId: id })),
+
+  moveDraftToInProgress: (task) =>
+    set((s) => ({
+      todo: s.todo.filter((t) => t.id !== task.id),
+      inProgress: [task, ...s.inProgress],
+      selectedDraftId: null,
+    })),
+
+  moveInProgressToDone: (id) =>
+    set((s) => {
+      const task = s.inProgress.find((t) => t.id === id);
+      if (!task) return s;
+      return {
+        inProgress: s.inProgress.filter((t) => t.id !== id),
+        done: [task, ...s.done],
+        selectedInProgressId: null,
+      };
+    }),
+
+  moveInProgressToTodo: (id) =>
+    set((s) => {
+      const task = s.inProgress.find((t) => t.id === id);
+      if (!task) return s;
+      return {
+        inProgress: s.inProgress.filter((t) => t.id !== id),
+        todo: [task, ...s.todo],
+        selectedInProgressId: null,
+      };
+    }),
+
+  updateInProgressTask: (id, data) =>
+    set((s) => ({
+      inProgress: s.inProgress.map((t) =>
+        t.id === id ? { ...t, ...data } : t
+      ),
+    })),
+
+  // ✅ NEW FUNCTION
+  removeDone: (id) =>
+    set((s) => ({
+      done: s.done.filter((t) => t.id !== id),
+    })),
+}));
+>>>>>>> Stashed changes
