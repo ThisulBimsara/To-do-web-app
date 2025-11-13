@@ -2,77 +2,66 @@
 
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
-import { useTaskStore } from "@/store/useTaskStore";
 import TodoSection from "@/components/TodoSection";
 import InProgressSection from "@/components/InProgressSection";
 import DoneSection from "@/components/DoneSection";
-import TaskDialogs from "@/components/TaskDialogs";
+import { useTasks } from "@/hooks/useTasksQuery";
+import { Task } from "@/types/task";
 
 export default function Page() {
-  const { moveInProgressToDone, moveInProgressToTodo, moveDraftToInProgress, todo, inProgress, done, clearAllTasks } =
-    useTaskStore();
+  const { tasksQuery, updateTaskMutation, clearAllMutation } = useTasks();
 
-  
-  const handleDragEnd = (result: DropResult) => {
+  const tasks = tasksQuery.data ?? [];
+  const todo: Task[] = tasks.filter((t: Task) => t.status === "todo");
+  const inProgress: Task[] = tasks.filter((t: Task) => t.status === "inProgress");
+  const done: Task[] = tasks.filter((t: Task) => t.status === "done");
+
+  const handleDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
-
- 
     if (!destination) return;
 
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    )
-      return;
-
- 
     const from = source.droppableId;
     const to = destination.droppableId;
 
-    if (from === to) return; 
+    const allLists: Record<string, Task[]> = { todo, inProgress, done };
+    const task = allLists[from][source.index];
+    if (!task?._id) return;
 
-     const allLists: Record<string, any[]> = { todo, inProgress, done };
-    const sourceList = allLists[from];
-    const task = sourceList[source.index];
-    if (!task) return;
-
-    if (from === "todo" && to === "inProgress") {
-      useTaskStore.getState().moveDraftToInProgress(task);
-    } else if (from === "inProgress" && to === "done") {
-      useTaskStore.getState().moveInProgressToDone(task.id);
-    } else if (from === "inProgress" && to === "todo") {
-      useTaskStore.getState().moveInProgressToTodo(task.id);
-    } else if (from === "done" && to === "inProgress") {
-      useTaskStore.setState((s) => ({
-        done: s.done.filter((t) => t.id !== task.id),
-        inProgress: [task, ...s.inProgress],
-      }));
-    } else if (from === "done" && to === "todo") {
-      useTaskStore.setState((s) => ({
-        done: s.done.filter((t) => t.id !== task.id),
-        todo: [task, ...s.todo],
-      }));
-    }
+    const id = task._id;
+    if (from === "todo" && to === "inProgress")
+      await updateTaskMutation.mutateAsync({ id, updates: { status: "inProgress" } });
+    if (from === "inProgress" && to === "done")
+      await updateTaskMutation.mutateAsync({ id, updates: { status: "done" } });
+    if (from === "inProgress" && to === "todo")
+      await updateTaskMutation.mutateAsync({ id, updates: { status: "todo" } });
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">TO do LisT</h1>
-        <Button variant="destructive" onClick={clearAllTasks}>
-          Delete All Tasks
+        <h1 className="text-3xl font-bold">My Todo List</h1>
+        <Button
+          variant="destructive"
+          onClick={() => clearAllMutation.mutate()}
+          className="hover-scale"
+        >
+          Clear All Tasks
         </Button>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid md:grid-cols-3 gap-4">
-          <TodoSection />
-          <InProgressSection />
-          <DoneSection />
+          <div id="todo">
+            <TodoSection />
+          </div>
+          <div id="inprogress">
+            <InProgressSection />
+          </div>
+          <div id="done">
+            <DoneSection />
+          </div>
         </div>
       </DragDropContext>
-
-      <TaskDialogs />
     </div>
   );
 }

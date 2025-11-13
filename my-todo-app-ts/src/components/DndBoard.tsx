@@ -6,6 +6,7 @@ import TodoSection from "@/components/TodoSection";
 import InProgressSection from "@/components/InProgressSection";
 import DoneSection from "@/components/DoneSection";
 import { useTaskStore } from "@/store/useTaskStore";
+import { Task } from "@/types/task";
 
 export default function DndBoard() {
   const { todo, inProgress, done } = useTaskStore();
@@ -21,13 +22,14 @@ export default function DndBoard() {
 
     const from = source.droppableId;
     const to = destination.droppableId;
-    const store = useTaskStore.getState();
 
-    const lists: Record<string, any[]> = { todo, inProgress, done };
+    const lists: Record<string, Task[]> = { todo, inProgress, done };
     const sourceList = [...lists[from]];
     const destList = [...lists[to]];
+
     const [movedTask] = sourceList.splice(source.index, 1);
     if (!movedTask) return;
+
     destList.splice(destination.index, 0, movedTask);
 
     useTaskStore.setState((state) => ({
